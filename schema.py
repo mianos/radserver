@@ -1,4 +1,3 @@
-import sys
 import os
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -20,27 +19,30 @@ class Reading(dbase):
     as_test = Column(types.Boolean, default=lambda: True if os.getenv('LOCALDEV', None) else None)
 
 
-#def get_session(options, config, allow_db=False):
-#    engine = create_engine(config.get(options.section, 'uri'))
+class Rand(dbase):
+    __tablename__ = 'randoms'
+    id = Column(types.Integer, primary_key=True)
+    value = Column(types.BigInteger, nullable=False)
+    timestamp = Column(types.DateTime, nullable=False)
+
+
+if __name__ == '__main__':
+    import argparse
+    import configparser
+
+    config = configparser.ConfigParser()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-f", "--config", dest="config", default='settings.ini', help="config file")
+    parser.add_argument("-s", "--section", dest="section", default='beta', help="config file section")
+    parser.add_argument("-c", "--create", dest="create", action="store_true", help="create database")
+    options = parser.parse_args()
+    config.readfp(open(options.config))
+    engine = create_engine(config.get(options.section, 'uri'))
+
+    Session = sessionmaker(bind=engine)
+    session = None
+
+    if options.create:
+        dbase.metadata.create_all(engine)
+        print("Created")
 #
-#    Session = sessionmaker(bind=engine)
-#    session = None
-#
-#    if allow_db:
-#        if options.create:
-#            dbase.metadata.create_all(engine)
-#            print("Created")
-#
-#        if options.delete or options.drop_all:
-#            session = Session()
-#            for table in dbase.metadata.sorted_tables:
-#                if options.delete:
-#                    session.execute(table.delete())
-#                if options.drop_all:
-#                    session.execute('drop table %s' % table.name)
-#            session.commit()
-#            if options.get('drop_all', None):
-#                print("dropped")
-#                sys.exit(1)
-#            print("deleted")
-#    return session or Session()

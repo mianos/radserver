@@ -1,8 +1,10 @@
+import os
 import json
 import configparser
 import argparse
+import dateutil.parser
 
-from flask import Flask, g, Response
+from flask import Flask, g, Response, request, jsonify
 from sqlalchemy import create_engine, null, func
 from sqlalchemy.orm import sessionmaker
 
@@ -39,6 +41,22 @@ def get_app():
 
 app = get_app()
 
+@app.route('/rad', methods=['POST'])
+def rtest():
+    return "OK"
+
+@app.route('/rad/<string:client_id>/radiation/<int:period>', methods=['POST'])
+def radpost(client_id, period):
+    data = request.get_json();
+    dbdata = dict(sensor_id=client_id,
+                  cpm=data['count'],
+                  timestamp=dateutil.parser.parse((data['datetime'])),
+                  pcount=data['this'],
+                  usp=data['uSv_h'],
+                  period_secs=data['period'])
+    print("Posted %r" % dbdata)
+    g.session.add(Reading(**dbdata))
+    return jsonify({'status': 'OK'})
 
 @app.route('/')
 def radiation():
