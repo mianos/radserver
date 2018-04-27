@@ -1,7 +1,5 @@
-import os
 import json
 import configparser
-import argparse
 import dateutil.parser
 
 from flask import Flask, g, Response, request, jsonify
@@ -12,6 +10,7 @@ from schema import Reading
 
 config_section = 'beta'
 settings_file = 'settings.ini'
+
 
 def get_app():
     config = configparser.ConfigParser()
@@ -41,35 +40,48 @@ def get_app():
 
 app = get_app()
 
+
 @app.route('/rad', methods=['POST'])
 def rtest():
-    return "OK"
+    print("got '%r'" % request.get_json())
+    return jsonify({'status': 'OK'})
+
 
 @app.route('/rad/<string:client_id>/radiation/<int:period>', methods=['POST'])
 def radpost(client_id, period):
-    data = request.get_json();
-    dbdata = dict(sensor_id=client_id,
-                  cpm=data['count'],
-                  timestamp=dateutil.parser.parse((data['datetime'])),
-                  pcount=data['this'],
-                  usp=data['uSv_h'],
-                  period_secs=data['period'])
+    data = request.get_json()
+    try:
+        dbdata = dict(sensor_id=client_id,
+                      cpm=data['count'],
+                      timestamp=dateutil.parser.parse((data['datetime'])),
+                      pcount=data['this'],
+                      usp=data['uSv_h'],
+                      period_secs=data['period'])
+    except ValueError as ee:
+        print("AAA"); from IPython import embed; embed()  # noqa
+        return;
     print("Posted %r" % dbdata)
     g.session.add(Reading(**dbdata))
     return jsonify({'status': 'OK'})
 
+
 @app.route('/')
 def radiation():
-    #SELECT sum(dt.pcount) / count(dt.id), sum(dt.pcount), count(dt.id), avg(dt.usp)
+    # SELECT sum(dt.pcount) / count(dt.id),
+    #  sum(dt.pcount), count(dt.id), avg(dt.usp)
     #  FROM (select * from readings
     #  where period_secs = 60 and as_test is NULL
     #  ORDER BY id DESC
     #  LIMIT 60) as dt;
 
     minutes = 60
-    recent = g.session.query(Reading).filter(Reading.period_secs == 60, Reading.as_test == null()).order_by(Reading.id.desc()).limit(minutes).subquery()
+    recent = g.session.query(Reading) \
+                      .filter(Reading.period_secs == 60, Reading.as_test == null()) \
+                      .order_by(Reading.id.desc()) \
+                      .limit(minutes) \
+                      .subquery()
     result = g.session.query((func.sum(recent.c.pcount) / func.count(recent.c.id)).label('cpm'),
-                              func.avg(recent.c.usp).label('usp'),
-                              func.max(recent.c.timestamp).label('last_timestamp')) \
+                             func.avg(recent.c.usp).label('usp'),
+                             func.max(recent.c.timestamp).label('last_timestamp')) \
                       .one()
     return Response(json.dumps(result._asdict(), default=lambda tt: tt.isoformat() if hasattr(tt, 'isoformat') else tt),  mimetype='application/json')
