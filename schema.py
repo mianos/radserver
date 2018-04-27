@@ -12,7 +12,7 @@ class Reading(dbase):
     id = Column(types.Integer, primary_key=True)
     sensor_id = Column(types.String(20), nullable=False)
     cpm = Column(types.Integer, nullable=False)
-    timestamp = Column(types.DateTime, nullable=False)
+    timestamp = Column(types.DateTime(timezone=True), nullable=False)
     usp = Column(types.Float, nullable=False)
     period_secs = Column(types.Integer, nullable=False)
     pcount = Column(types.Integer, nullable=False)
