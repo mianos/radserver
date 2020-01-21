@@ -12,7 +12,7 @@ import dateutil.parser
 import paho.mqtt.client as mqtt
 
 from schema import Reading, Rand
-import hec
+# import hec
 
 session = None
 
@@ -88,7 +88,7 @@ if __name__ == '__main__':
     options = parser.parse_args()
     config.readfp(open(options.config))
     app_config.update(dict(config[options.section].items()))
-    app_sessions['splunk'] = hec.PyHEC(token=app_config['splunk_token'], uri=app_config['splunk_uri'])
+#    app_sessions['splunk'] = hec.PyHEC(token=app_config['splunk_token'], uri=app_config['splunk_uri'])
 
     engine = create_engine(config.get(options.section, 'uri'))
     Session = sessionmaker(bind=engine)
