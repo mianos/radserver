@@ -1,5 +1,5 @@
 Flask==1.1.1
-Jinja2==2.10.3
+Jinja2==2.11.3
 paho-mqtt==1.5.0
 psycopg2-binary==2.8.4
 python-dateutil==2.8.1
